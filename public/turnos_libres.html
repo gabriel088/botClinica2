@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Turnos Disponibles Editable</title>
+  <style>
+    select, input[type="time"], input[type="date"] {
+      padding: 6px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      margin: 2px;
+    }
+    .estado-disponible {
+      background-color: #28a745;
+      color: white;
+    }
+    .estado-asignado {
+      background-color: #dc3545;
+      color: white;
+    }
+    #btn-agregar {
+      margin: 20px 0;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 8px;
+      border: none;
+      background-color: #007bff;
+      color: white;
+    }
+    .btn-guardar {
+      background-color: #ffc107;
+    }
+    .btn-borrar {
+      background-color: #ff4444;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Turnos Disponibles Editable por la secretaria</h1>
+  <button id="btn-agregar">+ Agregar nuevo turno</button>
+  <table>
+    <thead>
+      <tr>
+        <th>Especialidad</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-turnos"></tbody>
+  </table>
+
+  <script>
+    const opcionesEspecialidad = [
+      { valor: "Oftalmología", texto: "Oftalmología 👁️" },
+      { valor: "Pediatría", texto: "Pediatría 👶" },
+      { valor: "Odontología", texto: "Odontología 🦷" }
+    ];
+
+    async function cargarTurnos() {
+      const res = await fetch('/api/turnos_libres');
+      const turnos = await res.json();
+      const tbody = document.getElementById('tabla-turnos');
+      tbody.innerHTML = '';
+      turnos.forEach(turno => {
+        tbody.appendChild(crearFilaTurno(turno));
+      });
+    }
+
+    function crearFilaTurno(turno) {
+      const tr = document.createElement('tr');
+
+      // Especialidad
+      const tdEspecialidad = document.createElement('td');
+      const select = document.createElement('select');
+
+      const optionVacia = document.createElement('option');
+      optionVacia.value = "";
+      optionVacia.textContent = "-";
+      select.appendChild(optionVacia);
+
+      opcionesEspecialidad.forEach(op => {
+        const option = document.createElement('option');
+        option.value = op.valor;
+        option.textContent = op.texto;
+        if (op.valor === turno.especialidad) option.selected = true;
+        select.appendChild(option);
+      });
+
+      if (!turno.especialidad) select.value = "";
+      tdEspecialidad.appendChild(select);
+      tr.appendChild(tdEspecialidad);
+
+      // Fecha
+      const tdFecha = document.createElement('td');
+      const inputFecha = document.createElement('input');
+      inputFecha.type = 'date';
+      inputFecha.value = turno.fecha || '';
+      tdFecha.appendChild(inputFecha);
+      tr.appendChild(tdFecha);
+
+      // Hora
+      const tdHora = document.createElement('td');
+      const inputHora = document.createElement('input');
+      inputHora.type = 'time';
+      inputHora.value = turno.hora || '';
+      tdHora.appendChild(inputHora);
+      tr.appendChild(tdHora);
+
+      // Estado
+      const tdEstado = document.createElement('td');
+      const btnEstado = document.createElement('button');
+      btnEstado.classList.add('estado-btn');
+
+      if (turno.estado === 'disponible') {
+        btnEstado.classList.add('estado-disponible');
+        btnEstado.textContent = 'disponible';
+      } else {
+        btnEstado.classList.add('estado-asignado');
+        btnEstado.textContent = 'asignado';
+      }
+
+      btnEstado.addEventListener('click', async () => {
+        const nuevoEstado = btnEstado.textContent === 'disponible' ? 'asignado' : 'disponible';
+        const resp = await fetch('/api/cambiar-estado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: turno.id, estado: nuevoEstado })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          btnEstado.classList.toggle('estado-disponible');
+          btnEstado.classList.toggle('estado-asignado');
+          btnEstado.textContent = nuevoEstado;
+        } else {
+          alert("Error al actualizar el estado");
+        }
+      });
+
+      tdEstado.appendChild(btnEstado);
+      tr.appendChild(tdEstado);
+
+      // Botones de acción
+      const tdAcciones = document.createElement('td');
+
+      const btnGuardar = document.createElement('button');
+      btnGuardar.textContent = "Guardar";
+      btnGuardar.classList.add('btn-guardar');
+      btnGuardar.addEventListener('click', async () => {
+        const nuevoTurno = {
+          id: turno.id,
+          especialidad: select.value,
+          fecha: inputFecha.value,
+          hora: inputHora.value
+        };
+
+        const res = await fetch('/api/actualizar-turno', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(nuevoTurno)
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert('Cambios guardados');
+        } else {
+          alert('Error al guardar cambios');
+        }
+      });
+      tdAcciones.appendChild(btnGuardar);
+
+      const btnBorrar = document.createElement('button');
+      btnBorrar.textContent = "Borrar";
+      btnBorrar.classList.add('btn-borrar');
+      btnBorrar.addEventListener('click', async () => {
+        if (confirm("¿Seguro que querés borrar este turno?")) {
+          const res = await fetch('/api/borrar-turno', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: turno.id })
+          });
+          const data = await res.json();s
+          if (data.success) {
+            tr.remove();
+          } else {
+            alert("Error al borrar el turno");
+          }
+        }
+      });
+      tdAcciones.appendChild(btnBorrar);
+
+      tr.appendChild(tdAcciones);
+
+      return tr;
+    }
+
+    document.getElementById('btn-agregar').addEventListener('click', async () => {
+      const nuevo = {
+        especialidad: "",
+        fecha: "",
+        hora: "",
+        estado: "disponible"
+      };
+
+      const res = await fetch('/api/turnos_libres', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nuevo)
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        nuevo.id = data.id;
+        const tbody = document.getElementById('tabla-turnos');
+        tbody.appendChild(crearFilaTurno(nuevo));
+      } else {
+        alert("Error al insertar nuevo turno");
+      }
+    });
+
+    cargarTurnos();
+  </script>
+</body>
+</html>

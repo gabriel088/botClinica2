@@ -1,0 +1,134 @@
+/* --- Estilos generales base --- */
+body {
+  background-color: #121212; /* preferí este color oscuro del segundo CSS */
+  color: #f5f5f5;
+  font-family: Arial, sans-serif; /* uso Arial de tu primer CSS, que es más universal */
+  margin: 0;
+  padding: 20px;
+  text-align: center;
+  margin-top: 100px; /* lo agrego para mantener la separación */
+}
+
+/* Títulos */
+h1 {
+  color: #e53935; /* rojo fuerte del segundo CSS */
+  text-shadow: 0 0 10px rgba(229, 57, 53, 0.7);
+  margin-bottom: 40px;
+  margin-top: 0;
+}
+
+/* Tablas */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1e1e1e;
+  box-shadow: 0 0 10px rgba(229, 57, 53, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead {
+  background-color: #2c2c2c;
+}
+
+thead th {
+  padding: 12px;
+  color: #e53935;
+  border-bottom: 2px solid #e53935;
+}
+
+tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #333;
+  text-align: center;
+}
+
+/* Inputs */
+input {
+  padding: 10px;
+  font-size: 16px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #2a2a2a; /* fondo oscuro como en el segundo CSS */
+  color: #fff;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+input[type="time"] {
+  /* especifico para inputs tipo time */
+  border: 1px solid #e53935;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+
+/* Botones */
+button {
+  background-color: #e53935;
+  color: #fff;
+  border: none;
+  padding: 15px 30px; /* tamaño mayor, estilo primer CSS */
+  margin: 20px;
+  border-radius: 8px; /* más redondeado, estilo primer CSS */
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 18px;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #ff5252;
+  box-shadow: 0 0 5px rgba(229, 57, 53, 0.6);
+}
+
+button:active {
+  background-color: #c62828;
+}
+
+/* Botones específicos para estados de turnos */
+button.estado-btn {
+  padding: 6px 12px;
+  font-size: 1em;
+  border-radius: 4px;
+  margin: 0; /* para que no tenga margen extra y quede en la tabla */
+}
+
+button.estado-disponible {
+  background-color: #4caf50; /* verde */
+}
+
+button.estado-asignado {
+  background-color: #f44336; /* rojo */
+}
+
+/* Contenedor oculto */
+#claveContainer {
+  display: none;
+  margin-top: 20px;
+}
+
+/* Animación y efectos visuales */
+body::after {
+  content: '';
+  position: fixed;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  background: radial-gradient(circle at center, rgba(229,57,53,0.02) 0%, transparent 80%);
+  pointer-events: none;
+  z-index: -1;
+  animation: pulse 5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.03);
+  }
+}

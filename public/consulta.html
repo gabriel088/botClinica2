@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enviar Consulta</title>
+</head>
+<body>
+  <h1>Formulario de Consulta Médica</h1>
+  <h2>Por favor completá el siguiente formulario para dejarnos tu consulta.</h2>
+  <p>Un profesional de la clínica responderá a la brevedad. Este formulario es para consultas particulares o mensajes específicos que no puedan resolverse por el asistente automático. </p>
+
+
+
+  <form id="formConsulta">
+    <label for="paciente">Nombre del paciente:</label><br />
+    <input type="text" id="paciente" name="paciente" placeholder="Nombre completo" required /><br /><br />
+
+    <label for="motivo">Motivo de la consulta:</label><br />
+    <textarea id="motivo" name="motivo" placeholder="Ej: Quiero saber si atienden oftalmología los sábados" required></textarea><br /><br />
+
+    <button type="submit">Enviar Consulta</button>
+  </form>
+
+  <p id="respuesta"></p>
+
+  <h2>Consultas Registradas</h2>
+  <table border="1" id="tablaConsultas">
+    <thead>
+      <tr>
+        <th>Paciente</th>
+        <th>Motivo</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const form = document.getElementById('formConsulta');
+    const respuesta = document.getElementById('respuesta');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const paciente = document.getElementById('paciente').value.trim();
+      const motivo = document.getElementById('motivo').value.trim();
+
+      if (!paciente || !motivo) {
+        respuesta.textContent = '❌ Por favor completá todos los campos.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/consultas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paciente, motivo })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          respuesta.textContent = '✅ Consulta enviada correctamente.';
+          form.reset();
+          cargarConsultas();
+        } else {
+          respuesta.textContent = '❌ Error: ' + (data.mensaje || 'No se pudo enviar la consulta.');
+        }
+      } catch (error) {
+        respuesta.textContent = '❌ Error en la conexión al servidor.';
+        console.error(error);
+      }
+    });
+
+    async function cargarConsultas() {
+      try {
+        const res = await fetch('/api/consultas');
+        const datos = await res.json();
+
+        const tbody = document.querySelector('#tablaConsultas tbody');
+        tbody.innerHTML = '';
+
+        datos.forEach((c) => {
+          const fila = document.createElement('tr');
+          fila.innerHTML = `
+            <td>${c.paciente}</td>
+            <td>${c.motivo}</td>
+            <td>${new Date(c.fecha).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}</td>
+          `;
+          tbody.appendChild(fila);
+        });
+      } catch (error) {
+        console.error('Error al cargar las consultas:', error);
+      }
+    }
+
+    cargarConsultas();
+  </script>
+</body>
+</html>

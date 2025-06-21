@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ingreso al sistema</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- 📦 Pico.css CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Bienvenido al bot de la clínica mejorado</h1>
+    <h2>Este software permite a la secretaria asignar turnos que el bot entrega automáticamente a los pacientes</h2>
+
+    <!-- botones -->
+    <button onclick="window.location.href='consulta.html'">Consulta personalizada</button>
+    <button onclick="window.location.href='chat.html'">¿Deseás sacar turno?</button>
+    <button onclick="mostrarClave()">Asignar turnos libres para el bot</button>
+
+    <div id="claveContainer" style="display: none; margin-top: 20px;">
+      <input type="password" id="claveInput" placeholder="Ingrese la clave..." />
+      <button onclick="verificarClave()">Acceder</button>
+    </div>
+  </main>
+
+  <script>
+    function mostrarClave() {
+      document.getElementById("claveContainer").style.display = "block";
+    }
+
+    function verificarClave() {
+      const clave = document.getElementById("claveInput").value;
+      if (clave === "1234") {
+        window.location.href = "turnos_libres.html";
+      } else {
+        alert("❌ Clave incorrecta");
+      }
+    }
+  </script>
+</body>
+</html>

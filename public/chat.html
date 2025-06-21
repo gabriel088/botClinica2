@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>🏥 - Clínica Magaña</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f3f3;
+      padding: 20px;
+    }
+
+    #chat {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .mensaje {
+      margin-bottom: 10px;
+    }
+
+    .bot {
+      color: #444;
+    }
+
+    .usuario {
+      text-align: right;
+      color: #0077cc;
+    }
+
+    input, button {
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #0077cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <div id="mensajes"></div>
+    <input type="text" id="entrada" placeholder="Escribí tu mensaje...">
+    <button onclick="enviarMensaje()">Enviar</button>
+  </div>
+
+  <script>
+    const mensajesDiv = document.getElementById('mensajes');
+
+    const entrada = document.getElementById('entrada');
+
+    function agregarMensaje(texto, clase) {
+      const div = document.createElement('div');
+      div.className = 'mensaje ' + clase;
+      div.innerHTML = texto.replace(/\n/g, '<br>');  // Cambio para saltos de línea
+      mensajesDiv.appendChild(div);
+      mensajesDiv.scrollTop = mensajesDiv.scrollHeight;
+    }
+
+     function enviarMensaje() {
+  const mensaje = entrada.value.trim();
+  if (mensaje === '') return;
+
+  agregarMensaje(mensaje, 'usuario');
+  entrada.value = '';
+
+  fetch('/mensaje', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mensaje })
+  })
+  .then(res => res.json())
+  .then(data => {
+    agregarMensaje(data.respuesta, 'bot');
+
+    // 🔁 Redirección si el backend lo pide
+    if (data.redirigir) {
+      setTimeout(() => {
+        window.location.href = "index.html";  // ← Asegurate que este archivo exista
+      }, 3000); // 3 segundos de espera
+    }
+  });
+}
+
+    // Permitir enviar con Enter
+    entrada.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') enviarMensaje();
+    });
+
+    // Mensaje inicial
+    agregarMensaje(`Hola, soy el asistente 🤖🩺 de la Clínica Reino Champiñón.Escribí "hola" para comenzar con tu consulta`, 'bot');
+  </script>
+</body>
+</html>
