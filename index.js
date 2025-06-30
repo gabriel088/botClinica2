@@ -115,10 +115,41 @@ app.post('/mensaje', (req, res) => {
             return res.json({ respuesta: "Guardamos tus datos, pero no pudimos cargar los turnos." });
           }
 
-          if (filas.length === 0) {
-            estadoUsuario.paso = null;
-            return res.json({ respuesta: `Guardamos tus datos, pero NO hay turnos disponibles ahora. Te avisaremos por correo.` });
-          }
+          
+          
+if (filas.length === 0) {
+  // Guardar en lista_espera
+  const fechaSolicitud = new Date().toISOString();
+
+
+  
+  const insertListaEspera = `
+    INSERT INTO lista_espera (nombre, dni, mail, obra_social, numero_afiliado, especialidad, fecha_solicitud)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.run(insertListaEspera, [
+    d.nombre,
+    d.dni,
+    d.mail,
+    d.obraSocial,
+    d.numeroAfiliado,
+    especialidad,
+    fechaSolicitud
+  ], function (err2) {
+    if (err2) {
+      console.error("❌ Error al guardar en lista_espera:", err2.message);
+    }
+  });
+
+  estadoUsuario.paso = null;
+  return res.json({
+    respuesta: `Guardamos tus datos, pero NO hay turnos disponibles ahora. Te agregamos a la lista de espera. Te avisaremos por correo.`
+  });
+}
+
+
+
 
           estadoUsuario.turnosDisponibles = filas;
           estadoUsuario.paso = "esperandoSeleccionTurno";
@@ -142,33 +173,31 @@ app.post('/mensaje', (req, res) => {
     }
 
     db.run(
-  `UPDATE turnos_libres SET estado = 'asignado' WHERE id = ?`,
-  [turnoSeleccionado.id],
-  (err) => {
-    if (err) {
-      console.error("❌ Error al asignar turno:", err.message);
-      return res.json({ respuesta: "Hubo un problema al asignar tu turno. Intentalo luego." });
-    }
-
-    // ACTUALIZAR FECHA ASIGNADA EN turnos_cliente
-    db.run(
-      `UPDATE turnos_cliente SET fecha_asignada = ? WHERE dni = ? AND especialidad = ?`,
-      [`${turnoSeleccionado.fecha} ${turnoSeleccionado.hora}`, estadoUsuario.datosUsuario.dni, estadoUsuario.especialidadElegida],
-      (err2) => {
-        if (err2) {
-          console.error("⚠️ Error al actualizar fecha_asignada:", err2.message);
+      `UPDATE turnos_libres SET estado = 'asignado' WHERE id = ?`,
+      [turnoSeleccionado.id],
+      (err) => {
+        if (err) {
+          console.error("❌ Error al asignar turno:", err.message);
+          return res.json({ respuesta: "Hubo un problema al asignar tu turno. Intentalo luego." });
         }
+
+        db.run(
+          `UPDATE turnos_cliente SET fecha_asignada = ? WHERE dni = ? AND especialidad = ?`,
+          [`${turnoSeleccionado.fecha} ${turnoSeleccionado.hora}`, estadoUsuario.datosUsuario.dni, estadoUsuario.especialidadElegida],
+          (err2) => {
+            if (err2) {
+              console.error("⚠️ Error al actualizar fecha_asignada:", err2.message);
+            }
+          }
+        );
+
+        estadoUsuario.paso = null;
+        return res.json({
+          respuesta: `✅ ¡Listo! Te asignamos el turno para el ${turnoSeleccionado.fecha} a las ${turnoSeleccionado.hora}. Te esperamos.`,
+          redirigir: true
+        });
       }
     );
-
-    estadoUsuario.paso = null;
-    return res.json({
-        respuesta: `✅ ¡Listo! Te asignamos el turno para el ${turnoSeleccionado.fecha} a las ${turnoSeleccionado.hora}. Te esperamos.`,
-        redirigir: true // 🔁 esta es la señal
-     });
-    } 
-    );
-
   }
 
   else {
@@ -176,7 +205,7 @@ app.post('/mensaje', (req, res) => {
   }
 });
 
-// Endpoints para el admin
+// Endpoints para turnos
 app.get('/api/turnos_libres', (req, res) => {
   db.all(`SELECT * FROM turnos_libres ORDER BY fecha, hora`, (err, filas) => {
     if (err) return res.status(500).json({ error: "Error al obtener turnos libres" });
@@ -201,29 +230,75 @@ app.post('/api/borrar-turno', (req, res) => {
   });
 });
 
-
-
-
 app.post('/api/actualizar-turno', (req, res) => {
   const { id, especialidad, fecha, hora } = req.body;
-
   const query = `
     UPDATE turnos_libres
     SET especialidad = ?, fecha = ?, hora = ?
     WHERE id = ?
   `;
-
   db.run(query, [especialidad, fecha, hora, id], function (err) {
     if (err) {
       console.error("❌ Error al actualizar turno:", err.message);
       return res.json({ success: false });
     }
+    res.json({ success: true });
+  });
+});
 
+// 📌 NUEVOS ENDPOINTS para consultas
+app.get('/api/consultas', (req, res) => {
+  db.all(`SELECT * FROM consultas ORDER BY fecha DESC`, (err, filas) => {
+    if (err) return res.status(500).json({ mensaje: "Error al cargar consultas" });
+    res.json(filas);
+  });
+});
+
+app.post('/api/consultas', (req, res) => {
+  const { paciente, motivo } = req.body;
+  const fecha = new Date().toISOString();
+
+  const query = `INSERT INTO consultas (paciente, motivo, fecha) VALUES (?, ?, ?)`;
+  db.run(query, [paciente, motivo, fecha], function (err) {
+    if (err) {
+      console.error("❌ Error al guardar consulta:", err.message);
+      return res.status(500).json({ mensaje: "No se pudo guardar la consulta." });
+    }
+    res.json({ success: true });
+  });
+});
+
+app.post('/api/consultas/borrar', (req, res) => {
+  const { id } = req.body;
+  db.run(`DELETE FROM consultas WHERE id = ?`, [id], function (err) {
+    if (err) {
+      console.error("❌ Error al borrar consulta:", err.message);
+      return res.status(500).json({ mensaje: "No se pudo borrar la consulta." });
+    }
     res.json({ success: true });
   });
 });
 
 
+app.get('/api/lista_espera', (req, res) => {
+  db.all(`SELECT * FROM lista_espera ORDER BY fecha_solicitud DESC`, (err, filas) => {
+    if (err) {
+      console.error("❌ Error al obtener lista de espera:", err.message);
+      return res.status(500).json({ mensaje: "Error al cargar la lista de espera" });
+    }
+    res.json(filas);
+  });
+});
+
+
+
+
+
+
+
+
 app.listen(port, () => {
   console.log(`🚑 Servidor corriendo en http://localhost:${port}`);
 });
+
+

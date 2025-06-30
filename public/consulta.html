@@ -7,9 +7,9 @@
 </head>
 <body>
   <h1>Formulario de Consulta Médica</h1>
+   <h2>este apartado hay que ver como desarrollarlo?</h2>
   <h2>Por favor completá el siguiente formulario para dejarnos tu consulta.</h2>
-  <p>Un profesional de la clínica responderá a la brevedad. Este formulario es para consultas particulares o mensajes específicos que no puedan resolverse por el asistente automático. </p>
-
+  <p>Un profesional de la clínica responderá a la brevedad. Este formulario es para consultas particulares o mensajes específicos que no puedan resolverse por el asistente automático.</p>
 
 
   <form id="formConsulta">
@@ -31,12 +31,20 @@
         <th>Paciente</th>
         <th>Motivo</th>
         <th>Fecha</th>
+        <th>Acción</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
+   <button onclick="volverInicio()">🏠 Volver al Chat Principal</button>
+
   <script>
+    function volverInicio() {
+      window.location.href = "/";
+    }
+
+
     const form = document.getElementById('formConsulta');
     const respuesta = document.getElementById('respuesta');
 
@@ -87,11 +95,39 @@
             <td>${c.paciente}</td>
             <td>${c.motivo}</td>
             <td>${new Date(c.fecha).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}</td>
+            <td><button onclick="borrarConsulta(${c.id})">Borrar</button></td>
           `;
           tbody.appendChild(fila);
         });
       } catch (error) {
         console.error('Error al cargar las consultas:', error);
+      }
+    }
+
+    async function borrarConsulta(id) {
+      if (!confirm("¿Seguro que querés borrar esta consulta?")) return;
+
+      try {
+        const res = await fetch('/api/consultas/borrar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          // ✅ Borrado visual inmediato sin recargar toda la tabla
+          const boton = document.querySelector(`button[onclick="borrarConsulta(${id})"]`);
+          if (boton) {
+            const fila = boton.closest('tr');
+            if (fila) fila.remove();
+          }
+        } else {
+          alert("❌ No se pudo borrar la consulta.");
+        }
+      } catch (error) {
+        console.error("Error al borrar:", error);
+        alert("❌ Error en el servidor.");
       }
     }
 

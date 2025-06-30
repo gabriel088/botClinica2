@@ -64,7 +64,14 @@
     <tbody id="tabla-turnos"></tbody>
   </table>
 
+   <button onclick="volverInicio()">🏠 Volver al Chat Principal</button>
+   
   <script>
+
+     function volverInicio() {
+      window.location.href = "/";
+    }
+
     const opcionesEspecialidad = [
       { valor: "Oftalmología", texto: "Oftalmología 👁️" },
       { valor: "Pediatría", texto: "Pediatría 👶" },

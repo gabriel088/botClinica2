@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lista de Espera</title>
+  <style>
+    button {
+      padding: 10px 20px;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #0d47a1;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  
+
+  <h2>📋 Lista de Espera</h2>
+  <table border="1" id="tablaEspera">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>DNI</th>
+        <th>Mail</th>
+        <th>Obra Social</th>
+        <th>N° Afiliado</th>
+        <th>Especialidad</th>
+        <th>Fecha Solicitud</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button onclick="volverInicio()">🏠 Volver al Chat Principal</button> 
+
+
+  <script>
+    function volverInicio() {
+      window.location.href = "/";
+    }
+
+    async function cargarListaEspera() {
+      try {
+        const res = await fetch('/api/lista_espera');
+        const datos = await res.json();
+        const tbody = document.querySelector('#tablaEspera tbody');
+        tbody.innerHTML = '';
+
+        datos.forEach((e) => {
+          const fecha = new Date(e.fecha_solicitud).toLocaleString("es-AR", {
+            timeZone: "America/Argentina/Buenos_Aires"
+          });
+
+          const fila = document.createElement('tr');
+          fila.innerHTML = `
+            <td>${e.nombre}</td>
+            <td>${e.dni}</td>
+            <td>${e.mail}</td>
+            <td>${e.obra_social}</td>
+            <td>${e.numero_afiliado}</td>
+            <td>${e.especialidad}</td>
+            <td>${fecha}</td>
+          `;
+          tbody.appendChild(fila);
+        });
+      } catch (error) {
+        console.error('❌ Error al cargar la lista de espera:', error);
+      }
+    }
+
+    cargarListaEspera();
+  </script>
+</body>
+</html>
